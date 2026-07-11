@@ -11,5 +11,8 @@ class Settings(BaseSettings):
     neo4j_password: str = "autoclipdev"
     neo4j_database: str = "neo4j"
     data_dir: str = "./data"
+    whisper_model: str = "base"
+    whisper_device: str = "cpu"
+    whisper_compute_type: str = "int8"
 
 settings = Settings()
