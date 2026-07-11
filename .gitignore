@@ -1,1 +1,17 @@
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 .venv/
+.env
+*.log
+data/uploads/
+data/audio/
+data/segments/
+data/clips/
