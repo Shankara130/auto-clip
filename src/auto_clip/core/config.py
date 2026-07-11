@@ -10,5 +10,6 @@ class Settings(BaseSettings):
     neo4j_user: str = "neo4j"
     neo4j_password: str = "autoclipdev"
     neo4j_database: str = "neo4j"
+    data_dir: str = "./data"
 
 settings = Settings()
