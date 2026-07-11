@@ -30,3 +30,16 @@ def get_video(driver: Driver, video_id: str) -> dict | None:
     with driver.session(database=settings.neo4j_database) as session:
         record = session.run("MATCH (v:Video {id: $id}) RETURN v", id=video_id).single()
         return dict(record["v"]) if record else None
+    
+def set_video_status(driver: Driver, video_id: str, status: str, audio_path: str | None = None, error: str | None = None) -> None:
+    with driver.session(database=settings.neo4j_database) as session:
+        session.run(
+            """
+            MATCH (v:Video {id:$id})
+            SET v.status = $status,
+                v.audio_path = $audio_path,
+                v.error = $error,
+                v.updated_at = timestamp()
+            """,
+            id=video_id, status=status, audio_path=audio_path, error=error,
+        )
