@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from auto_clip.db.neo4j_driver import get_driver
 from auto_clip.db.repositories.video_repo import create_video, get_video
+from auto_clip.db.repositories.segment_repo import create_segment, get_segments_by_video
 from auto_clip.models.video import VideoCreate
+from auto_clip.models.segment import SegmentCreate
 
 router = APIRouter(prefix="/videos", tags=["videos"])
 
@@ -18,3 +20,12 @@ def get_video_endpoint(video_id: str):
     if video is None:
         raise HTTPException(status_code=404, detail="Video not found")
     return video
+
+@router.post("/{video_id}/segments")
+def create_segment_endpoint(video_id: str, data: SegmentCreate):
+    seg_id = create_segment(get_driver(), video_id, data)
+    return {"id": seg_id, "video_id": video_id, **data.model_dump()}
+
+@router.get("/{video_id}/segments")
+def list_segments(video_id: str):
+    return get_segments_by_video(get_driver(), video_id)
