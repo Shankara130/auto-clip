@@ -3,3 +3,4 @@ uvicorn[standard]
 pydantic-settings
 neo4j
 faster-whisper
+httpx
