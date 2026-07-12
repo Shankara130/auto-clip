@@ -17,7 +17,7 @@ def render_segment(driver: Driver, video_id: str, ordinal: int, captions: bool =
         row = session.run(
             """
             MATCH (v:Video {id: $vid})-[:HAS_SEGMENT]->(s:Segment {id: $sid})
-            RETURN s.start_s AS start_s, s.end_s as end_s, v.source_uri AS source_uri, v.audio_path AS audio_path
+            RETURN s.start_s AS start_s, s.end_s as end_s, coalesce(v.source_path, v.source_uri) AS source_uri, v.audio_path AS audio_path
             """,
             vid=video_id, sid=seg_id,
         ).single()
