@@ -6,7 +6,12 @@ from auto_clip.rendering.ffmpeg_clipper import cut_clip, attach_subtitles
 from auto_clip.transcription.whisper_engine import transcribe_words
 from auto_clip.captions.srt_writer import words_to_srt
 
-def render_segment(driver: Driver, video_id: str, ordinal: int, captions: bool = False) -> str:
+ASPECT_FILTERS = {
+    "vertical": "scale=-2:1920, crop=1080:1920",
+    "horizontal": "scale=1920:-2, crop=1920:1080",
+}
+
+def render_segment(driver: Driver, video_id: str, ordinal: int, captions: bool = False, aspect: str = "original") -> str:
     seg_id = f"{video_id}:{ordinal}"
     with driver.session(database=settings.neo4j_database) as session:
         row = session.run(
@@ -24,7 +29,8 @@ def render_segment(driver: Driver, video_id: str, ordinal: int, captions: bool =
     os.makedirs(clips_dir, exist_ok=True)
     safe = seg_id.replace(":", "_")
     out_path = os.path.join(clips_dir, f"{safe}.mp4")
-    cut_clip(row["source_uri"], start, end, out_path)
+    vf = ASPECT_FILTERS.get(aspect)
+    cut_clip(row["source_uri"], start, end, out_path, vf=vf)
     
     if captions and row.get("audio_path"):
         words = transcribe_words(row["audio_path"])
@@ -35,4 +41,4 @@ def render_segment(driver: Driver, video_id: str, ordinal: int, captions: bool =
             with open(srt_path, "w") as f:
                 f.write(srt)
             attach_subtitles(out_path, srt_path)
-    return create_clip(driver, seg_id, out_path, start, end)
+    return create_clip(driver, seg_id, out_path, start, end, aspect=aspect)
