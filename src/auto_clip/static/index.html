@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <title>auto-clip</title>
+    <style>
+      body {
+        font-family: system-ui;
+        max-width: 560px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      label {
+        display: block;
+        margin: 0.6rem 0;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 0.45rem;
+        box-sizing: border-box;
+      }
+      button {
+        margin-top: 1rem;
+        padding: 0.6rem 1.3rem;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 1rem;
+        color: #555;
+      }
+      video {
+        margin-top: 1rem;
+        max-width: 100%;
+        border: 1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>auto-clip</h1>
+    <form id="form">
+      <input
+        name="source_uri"
+        required
+        placeholder="https://... atau data/uploads/x.mp4"
+      />
+      <label
+        >Orientasi output
+        <select name="aspect">
+          <option value="vertical">Vertical 9:16 (Shorts/Reels)</option>
+          <option value="horizontal">Horizontal 16:9 (YouTube)</option>
+        </select>
+      </label>
+      <button type="submit">Generate Klip</button>
+    </form>
+    <p id="status"></p>
+    <div id="result"></div>
+
+    <script>
+      const form = document.getElementById("form");
+      const statusEl = document.getElementById("status");
+      const resultEl = document.getElementById("result");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const source_uri = form.source_uri.value.trim();
+        const aspect = form.aspect.value;
+        statusEl.textContent = "Mengirim...";
+        resultEl.innerHTML = "";
+
+        try {
+          // 1) generate (background)
+          const res = await fetch("/clips/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ source_uri, aspect }),
+          });
+          const { video_id } = await res.json();
+
+          // 2) poll status sampai selesai/gagal
+          let status = "";
+          while (status !== "done" && status !== "failed") {
+            await new Promise((r) => setTimeout(r, 2000));
+            const v = await (await fetch(`/videos/${video_id}`)).json();
+            status = v.status;
+            statusEl.textContent = `Memproses... (${status})`;
+          }
+
+          // 3) tampilkan klip
+          if (status === "done") {
+            const clips = await (
+              await fetch(`/videos/${video_id}/clips`)
+            ).json();
+            if (clips.length) {
+              const c = clips[0];
+              resultEl.innerHTML =
+                `<h3>Klip ${c.aspect}</h3>` +
+                `<video src="/clips/${c.clip_id}/download" controls></video>`;
+              statusEl.textContent = "Selesai ✓";
+            } else {
+              statusEl.textContent = "Selesai, tapi tak ada klip.";
+            }
+          } else {
+            statusEl.textContent = `Gagal: ${status}`;
+          }
+        } catch (err) {
+          statusEl.textContent = "Error: " + err.message;
+        }
+      });
+    </script>
+  </body>
+</html>
