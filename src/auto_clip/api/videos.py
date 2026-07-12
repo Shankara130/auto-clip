@@ -73,6 +73,6 @@ def recommend_endpoint(video_id: str, k: int = 3):
     return {"video_id": video_id, "recommendations": recommend(get_driver(), video_id, k)}
 
 @router.post("/{video_id}/segments/{ordinal}/render")
-def render_endpoint(video_id: str, ordinal: int, captions: bool = False):
-    clip_id = render_segment(get_driver(), video_id, ordinal, captions=captions)
-    return {"clip_id": clip_id, "captions": captions}
+def render_endpoint(video_id: str, ordinal: int, captions: bool = False, aspect: str = "original"):
+    clip_id = render_segment(get_driver(), video_id, ordinal, captions=captions, aspect=aspect)
+    return {"clip_id": clip_id, "captions": captions, "aspect": aspect}
