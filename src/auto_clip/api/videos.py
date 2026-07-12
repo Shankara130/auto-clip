@@ -7,6 +7,8 @@ from auto_clip.models.segment import SegmentCreate
 from auto_clip.pipeline.ingest import ingest_video
 from auto_clip.pipeline.transcribe import transcribe_video
 from auto_clip.pipeline.render import render_segment
+from auto_clip.pipeline.analyze import analyze_video
+from auto_clip.recommend.recommend import recommend
 
 router = APIRouter(prefix="/videos", tags=["videos"])
 
@@ -54,3 +56,18 @@ def transcribe_endpoint(video_id: str, background_tasks: BackgroundTasks):
 def render_endpoint(video_id: str, ordinal: int):
     clip_id = render_segment(get_driver(), video_id, ordinal)
     return {"clip_id": clip_id, "message": "rendered"}
+
+@router.post("/{video_id}/analyze")
+def analyze_endpoint(video_id: str, background_tasks: BackgroundTasks):
+    video = get_video(get_driver(), video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="Video not found")
+    background_tasks.add_task(analyze_video, get_driver(), video_id)
+    return {"id": video_id, "message": "analyze queued"}
+
+@router.get("/{video_id}/recommend")
+def recommend_endpoint(video_id: str, k: int = 3):
+    video = get_video(get_driver(), video_id)
+    if video is None:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return {"video_id": video_id, "recommendations": recommend(get_driver(), video_id, k)}

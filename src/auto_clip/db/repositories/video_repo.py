@@ -37,7 +37,7 @@ def set_video_status(driver: Driver, video_id: str, status: str, audio_path: str
             """
             MATCH (v:Video {id:$id})
             SET v.status = $status,
-                v.audio_path = $audio_path,
+                v.audio_path = coalesce($audio_path, v.audio_path),
                 v.error = $error,
                 v.updated_at = timestamp()
             """,
