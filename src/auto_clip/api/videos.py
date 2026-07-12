@@ -6,6 +6,7 @@ from auto_clip.models.video import VideoCreate
 from auto_clip.models.segment import SegmentCreate
 from auto_clip.pipeline.ingest import ingest_video
 from auto_clip.pipeline.transcribe import transcribe_video
+from auto_clip.pipeline.render import render_segment
 
 router = APIRouter(prefix="/videos", tags=["videos"])
 
@@ -48,3 +49,8 @@ def transcribe_endpoint(video_id: str, background_tasks: BackgroundTasks):
       raise HTTPException(status_code=404, detail="Video not found")
     background_tasks.add_task(transcribe_video, get_driver(), video_id)
     return {"id": video_id, "message": "transcribe queued"}
+
+@router.post("/{video_id}/segments/{ordinal}/render")
+def render_endpoint(video_id: str, ordinal: int):
+    clip_id = render_segment(get_driver(), video_id, ordinal)
+    return {"clip_id": clip_id, "message": "rendered"}
