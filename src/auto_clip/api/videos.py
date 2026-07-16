@@ -9,6 +9,7 @@ from auto_clip.pipeline.transcribe import transcribe_video
 from auto_clip.pipeline.render import render_segment
 from auto_clip.pipeline.analyze import analyze_video
 from auto_clip.recommend.recommend import recommend
+from auto_clip.core.config import settings
 
 router = APIRouter(prefix="/videos", tags=["videos"])
 
@@ -76,3 +77,15 @@ def recommend_endpoint(video_id: str, k: int = 3):
 def render_endpoint(video_id: str, ordinal: int, captions: bool = False, aspect: str = "original"):
     clip_id = render_segment(get_driver(), video_id, ordinal, captions=captions, aspect=aspect)
     return {"clip_id": clip_id, "captions": captions, "aspect": aspect}
+
+@router.get("/{video_id}/clips")
+def list_clips(video_id: str):
+    with get_driver().session(database=settings.neo4j_database) as s:
+        rows = s.run(
+            """
+            MATCH (v:Video {id: $vid})-[:HAS_SEGMENT]->(s)<-[:DERIVED_FROM]-(c:Clip)
+            RETURN c.id AS clip_id, c.aspect AS aspect
+            """,
+            vid=video_id,
+        )
+        return [dict(r) for r in rows]
